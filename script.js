@@ -43,9 +43,11 @@ const cards = Array.from(document.querySelectorAll(".place-card"));
 const railDots = Array.from(document.querySelectorAll(".rail-dot"));
 const nextBtn = document.getElementById("nextBtn");
 const prevBtn = document.getElementById("prevBtn");
+const travelHero = document.getElementById("travelHero");
 
 let currentIndex = 0;
 let autoPlayId;
+let scrollLock = false;
 
 function getRelativePosition(cardIndex, activeIndex, total) {
   return (cardIndex - activeIndex + total) % total;
@@ -95,29 +97,51 @@ function stopAutoPlay() {
   }
 }
 
-nextBtn.addEventListener("click", () => {
-  updateSlides(currentIndex + 1);
+function handleSlideChange(nextIndex) {
+  updateSlides(nextIndex);
   startAutoPlay();
+}
+
+function handleWheelNavigation(event) {
+  if (!travelHero.contains(event.target) || scrollLock || Math.abs(event.deltaY) < 18) {
+    return;
+  }
+
+  event.preventDefault();
+  scrollLock = true;
+
+  if (event.deltaY > 0) {
+    handleSlideChange(currentIndex + 1);
+  } else {
+    handleSlideChange(currentIndex - 1);
+  }
+
+  window.setTimeout(() => {
+    scrollLock = false;
+  }, 700);
+}
+
+nextBtn.addEventListener("click", () => {
+  handleSlideChange(currentIndex + 1);
 });
 
 prevBtn.addEventListener("click", () => {
-  updateSlides(currentIndex - 1);
-  startAutoPlay();
+  handleSlideChange(currentIndex - 1);
 });
 
 railDots.forEach((dot) => {
   dot.addEventListener("click", () => {
-    updateSlides(Number(dot.dataset.index));
-    startAutoPlay();
+    handleSlideChange(Number(dot.dataset.index));
   });
 });
 
 cards.forEach((card) => {
   card.addEventListener("click", () => {
-    updateSlides(Number(card.dataset.index));
-    startAutoPlay();
+    handleSlideChange(Number(card.dataset.index));
   });
 });
+
+travelHero.addEventListener("wheel", handleWheelNavigation, { passive: false });
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
